@@ -2,6 +2,7 @@ from numpy import *
 import operator
 import matplotlib
 import matplotlib.pyplot as plt
+from os import listdir
 
 #def createDataSet():  #创建数据集和标签
     #group = array([[1.0,1.1],[1.0,1.0],[0,0],[0,0.1]])
@@ -38,7 +39,7 @@ def file2matrix(filename): #从文件中读取数据
     fr = open(filename) #打开文件
     arrayOLines = fr.readlines()  #读取文件内容
     numberOfLines = len(arrayOLines)  #获取文件行数
-    returnMat = zeros((numberOfLines,3)) #返回的NumPy矩阵,解析完成的数据:numberOfLines行,3列
+    returnMat = zeros((numberOfLines,3)) #返回的NumPy矩阵,解析完成的数据:numberOfLines行,3列 用0填充
     classLabelVector = [] #分类标签向量
     index = 0 #行的索引值
     for line in arrayOLines:
@@ -89,6 +90,44 @@ def classifyPerson(): #输入数据，利用kNN算法进行分类
     print ("You will probably like this person:",\
         resultList[classifierResult - 1])
 
+##################################手写数字识别################################
+
+def img2vector(filename):
+    returnVect = zeros((1,1024))
+    fr = open(filename)
+    for i in range(32):
+        lineStr = fr.readline()
+        for j in range(32):
+            returnVect[0,32*i+j] = int(lineStr[j])
+    return returnVect
+
+def handwritingClassTest():#手写数字识别
+    hwLabels = []
+    trainingFileList = listdir('trainingDigits') #listdir()可以列出给定目录的文件名
+    m = len(trainingFileList)
+    trainingMat = zeros((m,1024))
+    for i in range(m):
+        fileNameStr = trainingFileList[i]
+        fileStr = fileNameStr.split('.')
+        classNumStr = int(fileNameStr.split('_')[0])
+        hwLabels.append(classNumStr)
+        trainingMat[i,:] = img2vector('trainingDigits/%s' % fileNameStr)
+    testFileList = listdir('testDigits')
+    errorCount = 0.0
+    mTest = len(testFileList)
+    for i in range(mTest):
+        fileNameStr = testFileList[i]
+        fileStr = fileNameStr.split('.')[0]
+        classNumStr = int(fileNameStr.split('_')[0])
+        vectorUnderTest = img2vector('testDigits/%s' % fileNameStr)
+        classifierResult = classify0(vectorUnderTest, trainingMat, hwLabels, 3)
+        print("the classifier came back with: %d, the real answer is: %d"\
+            % (classifierResult, classNumStr))
+        if (classifierResult != classNumStr): errorCount += 1.0
+    print("\nthe total number of errors is: %d" % errorCount)
+    print("\nthe total error rate is: %f" % (errorCount/float(mTest)))
+
+
 if __name__ == '__main__':
     #filename = "datingTestSet2.txt"# datingTestSet2列表的最后一列是数字才对应48行的int()强制转换
     #datingDataMat,datingLabels = file2matrix(filename)
@@ -97,8 +136,11 @@ if __name__ == '__main__':
     #ax.scatter(datingDataMat[:,1],datingDataMat[:,2],15.0*array(datingLabels),15.0*array(datingLabels)) #后两个参数用色彩标识了数据点的类型
     #plt.show() #显示图像
     #normMat, ranges, minVals = autoNorm(datingDataMat)
-    datingClassTest()
-    classifyPerson()
+    #datingClassTest()
+    #classifyPerson()
+    #testVector = img2vector('testDigits/0_13.txt')
+    #print(testVector[0,0:31])
+    handwritingClassTest()
 
 
 
