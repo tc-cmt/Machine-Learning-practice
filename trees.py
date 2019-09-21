@@ -1,4 +1,5 @@
 from math import log
+import operator
 
 #dataSet: 数据集
 def calcShannonEnt(dataSet): #计算香农熵
@@ -44,8 +45,8 @@ def chooseBestFeatureToSplit(dataSet):#选出最好的特征值划分方式
     baseEntropy = calcShannonEnt(dataSet) #求出数据集的香农熵
     bestInfoGain = 0.0; bestFeature = -1 #bestInfoGain为熵值差最大的差值 bestFeature为熵最小的特征值（最好的特征值划分方式）
     for i in range(numFeatures):
-        featlist = [example[i] for example  in dataSet]
-        uniqueVals = set(featlist) #集合数据类型用来存唯一的元素值 set为集合数据类型
+        featlist = [example[i] for example  in dataSet]#遍历所有特征   
+        uniqueVals = set(featlist) #获取dataSet的第i个所有特征 #集合数据类型用来存唯一的元素值 set为集合数据类型 
         newEntropy = 0.0 #按特征值划分的香农熵
         for value in uniqueVals:
             subDataSet = spliDataSet(dataSet, i, value) #按照value特征值划分数据集
@@ -57,14 +58,41 @@ def chooseBestFeatureToSplit(dataSet):#选出最好的特征值划分方式
             bestFeature = i #满足条件就更新为熵最小的特征值
     return bestFeature #返回最好划分方式的特征值的位置
 
+def majorityCnt(classList):#返回出现次数最多的分类名称
+    classCount = {}
+    for vote in classList: 
+        if vote not in classCount.keys(): classCount[vote] = 0 
+        classCount[vote] += 1
+    sortedClassCount = sorted(classCount.items(), key = operator.itemgetter(1), reverse = True) #数据由大到小排序
+    return sortedClassCount[0][0]
+
+def createTree(dataSet, labels): #创建决策树
+    classList = [example[-1] for example in dataSet]#取分类标签
+    if classList.count(classList[0]) == len(classList): #如果类别完全相同则停止继续划分
+        return classList[0]
+    if len(dataSet[0]) == 1:   #遍历完所有特征时返回出现次数最多的类标签
+        return majorityCnt(classList)
+    bestFeat = chooseBestFeatureToSplit(dataSet)
+    bestFeatLabel = labels[bestFeat]
+    myTree = {bestFeatLabel:{}} #根据最优标签生成树
+    del(labels[bestFeat]) #删除已经使用过的特征标签
+    featValues = [example[bestFeat] for example in dataSet] #得到训练集中所有最优特征的属性值
+    uniqueVals = set(featValues) #去掉重复的属性值
+    for value in uniqueVals:  #遍历特征，创建决策树
+        subLabels = labels[:]
+        myTree[bestFeatLabel][value] = createTree(spliDataSet(dataSet, bestFeat, value), subLabels) #递归建立决策树
+    return myTree
+
 
 if __name__ == '__main__':
     myDat, labels = createDataSet()
-    print(myDat)
-    print(calcShannonEnt(myDat))
-    print('\n')
+    #print(myDat)
+    #print(calcShannonEnt(myDat))
+    #print('\n')
     #print(spliDataSet(myDat, 0, 1)) #按第0个特征值为1的情况划分
-    print(chooseBestFeatureToSplit(myDat))
+    #print(chooseBestFeatureToSplit(myDat))
+    myTree = createTree(myDat, labels)
+    print(myTree)
 
 
 
